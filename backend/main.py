@@ -63,7 +63,7 @@ def fetch_all_pages(url, headers):
 def get_data_from_db():
     try:
         # Abrufen aller Dokumente aus der Collection
-        data = list(collection_fixtures.find())
+        data = list(collection_fixturesDFB.find())
         user = list(collection_users.find())
         print(user)
 
@@ -94,11 +94,11 @@ def fetch_combine_store_data():
         #bets = 'https://v3.football.api-sports.io/odds?league=79&season=2024&bookmaker=27&bet=1'
         bets = 'https://v3.football.api-sports.io/odds?league=81&season=2024&bookmaker=22&bet=1'
         headers = {
-        'x-rapidapi-host': "v3.football.api-sports.io",
-        'x-rapidapi-key': "b65e03f57a3fef50c43dfbff73e002e1"
+            'x-rapidapi-host': "v3.football.api-sports.io",
+            'x-rapidapi-key': "b65e03f57a3fef50c43dfbff73e002e1"
         }
 
-        response1 = requests.get(fixture, headers=headers)
+        response1 = requests.get(fixtures, headers=headers)
         response1.raise_for_status()
         all_fixtures = response1.json()['response']
 

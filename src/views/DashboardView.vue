@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useDataStore } from "../stores/dataStore";
 import { RouterView, useRouter } from "vue-router";
 
 const dataStore = useDataStore();
 const router = useRouter();
+const modalRef = ref<null | HTMLDialogElement>(null);
 
 onMounted(() => {
   loadData();
@@ -18,7 +19,9 @@ const loadData = async () => {
 function openModal(value, quote) {
   dataStore.oddValue = value;
   dataStore.oddQuote = quote;
-  this.$refs.myModal.showModal();
+  if (modalRef.value) {
+    modalRef.value.showModal();
+  }
 }
 function wetteSetzen() {
   /* Kontostand berechnen */
@@ -26,7 +29,9 @@ function wetteSetzen() {
   dataStore.kontostand = neuerKontostand;
 
   /* Wette speichern */
-  this.$refs.myModal.close();
+  if (modalRef.value) {
+    modalRef.value.close();
+  }
 }
 
 function convertTimeReadable(date) {
@@ -51,7 +56,6 @@ function convertTimeReadable(date) {
       Add new user
     </button>
     <div>Kontostand: {{ dataStore.kontostand }}</div>
-    <div>hi</div>
   </div>
 
   <div class="flex flex-row flex-wrap m-8">
@@ -83,15 +87,17 @@ function convertTimeReadable(date) {
           />
         </div>
       </div>
-      <div v-for="bets in item.bets" class="card-actions justify-end">
-        <div v-for="odd in bets.values">
-          <p>{{ odd.value }}</p>
-          <button
-            class="btn btn-primary"
-            @click="openModal(odd.value, odd.odd)"
-          >
-            {{ odd.odd }}
-          </button>
+      <div v-for="bets in item.bookmakers">
+        <div v-for="odds in bets.bets" class="card-actions">
+          <div v-for="item in odds.values">
+            <p>{{ item.value }}</p>
+            <button
+              class="btn btn-primary"
+              @click="openModal(item.value, item.odd)"
+            >
+              {{ item.odd }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -107,7 +113,6 @@ function convertTimeReadable(date) {
           v-model="dataStore.wettgeld"
         />
         <form method="dialog">
-          <!-- if there is a button in form, it will close the modal -->
           <button class="btn" @click="wetteSetzen()">Close</button>
         </form>
       </div>
