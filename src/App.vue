@@ -6,7 +6,7 @@ const router = useRouter();
 
 <template>
   <div>
-    <main @keyup.esc="router.push({ name: 'dashboard' })">
+    <main @keyup.esc="router.push({ name: 'login' })">
       <RouterView />
     </main>
   </div>

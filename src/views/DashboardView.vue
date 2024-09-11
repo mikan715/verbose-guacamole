@@ -2,10 +2,11 @@
 import { onMounted, ref } from "vue";
 import { useDataStore } from "../stores/dataStore";
 import { RouterView, useRouter } from "vue-router";
+import { data } from "autoprefixer";
 
 const dataStore = useDataStore();
 const router = useRouter();
-const modalRef = ref<null | HTMLDialogElement>(null);
+const modal = ref(false);
 
 onMounted(() => {
   loadData();
@@ -16,22 +17,18 @@ const loadData = async () => {
   console.log("load data");
 };
 
-function openModal(value, quote) {
-  dataStore.oddValue = value;
+function openModal(quote, value, fixture) {
   dataStore.oddQuote = quote;
-  if (modalRef.value) {
-    modalRef.value.showModal();
-  }
+  dataStore.oddValue = value;
+  dataStore.item = fixture;
+  router.push({ name: "odd" });
 }
 function wetteSetzen() {
   /* Kontostand berechnen */
   const neuerKontostand = dataStore.kontostand - dataStore.wettgeld;
   dataStore.kontostand = neuerKontostand;
 
-  /* Wette speichern */
-  if (modalRef.value) {
-    modalRef.value.close();
-  }
+  modal.value = false;
 }
 
 function convertTimeReadable(date) {
@@ -56,6 +53,7 @@ function convertTimeReadable(date) {
       Add new user
     </button>
     <div>Kontostand: {{ dataStore.kontostand }}</div>
+    <div>User: {{ dataStore.userData.name }}</div>
   </div>
 
   <div class="flex flex-row flex-wrap m-8">
@@ -87,35 +85,36 @@ function convertTimeReadable(date) {
           />
         </div>
       </div>
-      <div v-for="bets in item.bookmakers">
-        <div v-for="odds in bets.bets" class="card-actions">
-          <div v-for="item in odds.values">
-            <p>{{ item.value }}</p>
-            <button
-              class="btn btn-primary"
-              @click="openModal(item.value, item.odd)"
-            >
-              {{ item.odd }}
-            </button>
+      <div v-if="item.fixture.status.short === 'FT'"></div>
+      <div v-else>
+        <div v-for="bets in item.bookmakers">
+          <div v-for="odds in bets.bets" class="card-actions">
+            <div v-for="odd in odds.values">
+              <p>{{ odd.value }}</p>
+              <button
+                class="btn btn-primary"
+                @click="openModal(odd.value, odd.odd, item)"
+              >
+                {{ odd.odd }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <dialog ref="myModal" class="modal">
-      <div class="modal-box">
-        <h3 class="text-lg font-bold">Hello!</h3>
-        <p>Quote: {{ dataStore.oddValue }} {{ dataStore.oddQuote }}</p>
-        <p>Kontostand: {{ dataStore.kontostand }}</p>
-        <input
-          type="text"
-          placeholder="dein wettgeld"
-          class="input input-bordered w-full max-w-xs"
-          v-model="dataStore.wettgeld"
-        />
-        <form method="dialog">
-          <button class="btn" @click="wetteSetzen()">Close</button>
-        </form>
-      </div>
-    </dialog>
+    <!-- <div v-if="modal.value == true" class="modal-box">
+      <h3 class="text-lg font-bold">Hello!</h3>
+      <p>Quote: {{ dataStore.oddValue }} {{ dataStore.oddQuote }}</p>
+      <p>Kontostand: {{ dataStore.kontostand }}</p>
+      <input
+        type="text"
+        placeholder="dein wettgeld"
+        class="input input-bordered w-full max-w-xs"
+        v-model="dataStore.wettgeld"
+      />
+      <form method="dialog">
+        <button class="btn" @click="wetteSetzen()">Close</button>
+      </form>
+    </div> -->
   </div>
 </template>

@@ -1,13 +1,13 @@
-# main.py
-
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+from datetime import datetime
 import requests
 from pymongo import MongoClient, errors
 from bson.json_util import dumps
-import os
 import re
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
 
 uri = "mongodb+srv://hallominkenberg:x70c0y5QHod1DkX4@cluster0.3pvrh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 # MongoDB-Konfiguration
@@ -60,8 +60,28 @@ def fetch_all_pages(url, headers):
 
     return all_responses
 
+@app.route('/login', methods=['GET'])
+def search():
+    # Suche nach einem Parameter in der URL
+    username = request.args.get('username')
+    print(username)
+    
+    if not username:
+        return jsonify({'error': 'Username parameter is required'}), 400
 
-@app.route('/', methods=['GET'])
+    # Suche nach dem Benutzer in der MongoDB
+    user_data = collection_users.find_one({'name': username})
+    print(user_data)
+    
+    if user_data:
+        # MongoDB ObjectId in String umwandeln
+        user_data['_id'] = str(user_data['_id'])
+        return jsonify(user_data), 200
+    else:
+        return jsonify({'error': 'User not found'}), 404
+
+
+@app.route('/dashboard', methods=['GET'])
 def get_data_from_db():
     try:
         # Abrufen aller Dokumente aus der Collection
@@ -75,8 +95,16 @@ def get_data_from_db():
             match = re.search(r'Regular Season - (\d+)', round_string)
             return int(match.group(1)) if match else 0
 
-        # Sortieren der Daten basierend auf der extrahierten Zahl
-        sorted_data = sorted(data, key=lambda x: extract_number(x.get('league', {}).get('round', 'Regular Season - 0')))
+        # Extraktion des Datums aus fixture.date
+        def parse_date(date_string):
+            # Wandelt das Datum in ein datetime-Objekt um
+            return datetime.fromisoformat(date_string.replace('Z', '+00:00'))
+
+        # Sortieren der Daten zuerst nach der extrahierten Zahl und dann nach dem Datum
+        sorted_data = sorted(data, key=lambda x: (
+            extract_number(x.get('league', {}).get('round', 'Regular Season - 0')),
+            parse_date(x.get('fixture', {}).get('date', '1970-01-01T00:00:00+00:00'))
+        ))
 
         # Konvertieren der Dokumente in JSON
         data_json = dumps(sorted_data)
@@ -151,10 +179,51 @@ def create_user():
     data = request.json
     user = {
         'name': data.get('name'),
-        'balance': data.get('balance', 0.0)  # Startkontostand
+        'balance': data.get('balance', 0.0),
+        'bets': data.get('bets', []),
     }
     user_id = collection_users.insert_one(user).inserted_id
     return jsonify({'user_id': str(user_id)}), 201
+
+@app.route('/add_bet', methods=['POST'])
+def add_bet():
+    # Daten von der Anfrage abrufen
+    user_id = request.json.get('user_id')
+    fixture = request.json.get('fixture')
+    wettgeld = request.json.get('wettgeld')
+    odd = request.json.get('odd')
+    value = request.json.get('value')
+
+    print(user_id)
+    print(fixture)
+    print(wettgeld)
+    print(odd)
+    print(value)
+
+    # Überprüfen, ob alle Felder vorhanden sind
+    """ if not user_id or not fixture or not wettgeld or not odd or not value:
+        return jsonify({'error': 'All fields (user_id, game, amount, odds) are required'}), 400 """
+
+    # Den Benutzer in der Datenbank finden
+    user = collection_users.find_one({'name': user_id})
+    print(user)
+
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Neue Wette erstellen
+    new_bet = {
+        'fixture': fixture,
+        'wettgeld': wettgeld,
+        'odd': odd,
+        'value': value,
+    }
+    print(new_bet)
+
+    # Wetten-Array aktualisieren
+    collection_users.update_one({'name': user_id}, {'$push': {'bets': new_bet}})
+
+    return jsonify({'message': 'Bet added successfully'}), 200
 
 
 if __name__ == '__main__':
