@@ -52,7 +52,7 @@ function convertTimeReadable(date) {
     <button class="btn btn-tertiary" @click="router.push({ name: 'addUser' })">
       Add new user
     </button>
-    <div>Kontostand: {{ dataStore.kontostand }}</div>
+    <div>Kontostand: {{ dataStore.userData.balance }}</div>
     <div>User: {{ dataStore.userData.name }}</div>
   </div>
 

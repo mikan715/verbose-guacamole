@@ -72,6 +72,8 @@ def search():
     # Suche nach dem Benutzer in der MongoDB
     user_data = collection_users.find_one({'name': username})
     print(user_data)
+
+    check_bet(username)
     
     if user_data:
         # MongoDB ObjectId in String umwandeln
@@ -79,6 +81,8 @@ def search():
         return jsonify(user_data), 200
     else:
         return jsonify({'error': 'User not found'}), 404
+    
+    
 
 
 @app.route('/dashboard', methods=['GET'])
@@ -125,7 +129,7 @@ def fetch_combine_store_data():
         #bets = 'https://v3.football.api-sports.io/odds?league=81&season=2024&bookmaker=22&bet=1'
         headers = {
             'x-rapidapi-host': "v3.football.api-sports.io",
-            'x-rapidapi-key': "b65e03f57a3fef50c43dfbff73e002e1"
+            'x-rapidapi-key': "f874ba51abe2ca12438a94113027071b"
         }
 
         response1 = requests.get(fixtures, headers=headers)
@@ -220,10 +224,66 @@ def add_bet():
     }
     print(new_bet)
 
+    userBalance = user.get('balance')
+    new_balance = float(userBalance) - float(wettgeld)
+
     # Wetten-Array aktualisieren
-    collection_users.update_one({'name': user_id}, {'$push': {'bets': new_bet}})
+    collection_users.update_one({'name': user_id}, {'$push': {'bets': new_bet}, '$set': {'balance': new_balance}})
 
     return jsonify({'message': 'Bet added successfully'}), 200
+
+
+def check_bet(username):
+    user = collection_users.find_one({"name": username})
+    userBalance = user.get('balance')
+    if not user:
+        print("User not found")
+        return
+    
+    for bet in user.get('bets', []):
+        fixture_id = bet.get('fixture')
+        wettgeld = bet.get('wettgeld')
+        oddTeam = bet.get('odd')
+        oddValue = bet.get('value')
+        fixture = collection_fixturesBL.find_one({
+            "fixture.id": fixture_id,
+            "fixture.status.short": "FT"
+        })
+
+        print('val', wettgeld, oddTeam, oddValue)
+
+        if fixture:
+            winner_home = fixture.get('teams', {}).get('home', {}).get('winner')
+            winner_away = fixture.get('teams', {}).get('away', {}).get('winner')
+
+            if winner_home == True and oddTeam == "Home":
+                countOdd(wettgeld, oddValue, username, userBalance, bet)
+                print('wette gewonnen home')
+            elif winner_away == True and oddTeam == "Away":
+                countOdd(wettgeld, oddValue, username, userBalance, bet)
+                print('wette gewonnen away')
+            elif winner_home != True and winner_away != True and oddTeam == "Draw":
+                countOdd(wettgeld, oddValue, username, userBalance, bet)
+                print('wette gewonnen draw')
+            else:
+                print('wette nicht gewonnen')
+
+        else:
+            print(f"No fixture found {fixture}")
+        
+        
+def countOdd(wettgeld, oddValue, username, userBalance, bet):
+    win_amount = float(wettgeld) * float(oddValue)
+    new_balance = userBalance + win_amount
+    collection_users.update_one(
+        {"name": username},
+        {
+            "$set": {"balance": new_balance},
+            "$pull": {"bets": bet}
+        }
+    )
+    print(f"User won the bet. New balance: {new_balance}")
+
 
 
 if __name__ == '__main__':
