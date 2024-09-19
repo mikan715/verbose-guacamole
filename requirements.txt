@@ -1,3 +1,5 @@
 Flask
-Gunicorn
-CORS
+Flask-Cors
+pymongo
+requests
+bson
