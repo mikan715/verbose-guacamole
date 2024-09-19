@@ -7,11 +7,8 @@ from bson.json_util import dumps
 import re
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(app)
 
-uri = "mongodb+srv://hallominkenberg:x70c0y5QHod1DkX4@cluster0.3pvrh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-# MongoDB-Konfiguration
-#MONGO_URI = os.getenv('MONGO_URI', 'mongodb://localhost:27017/')
 MONGO_URI = "mongodb+srv://hallominkenberg:x70c0y5QHod1DkX4@cluster0.3pvrh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 DATABASE_NAME = 'football_db'
 COLLECTION_FIXTURES = 'fixtures'
