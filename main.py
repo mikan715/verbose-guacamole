@@ -3,7 +3,6 @@ from flask_cors import CORS
 from datetime import datetime
 import requests
 from pymongo import MongoClient, errors
-from bson.json_util import dumps
 import re
 
 app = Flask(__name__)
