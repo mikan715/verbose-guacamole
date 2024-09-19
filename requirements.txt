@@ -3,5 +3,4 @@ flask_cors
 datetime
 requests
 pymongo
-bson.json_util
 re
