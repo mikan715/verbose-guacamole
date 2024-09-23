@@ -5,11 +5,16 @@ import requests
 from pymongo import MongoClient, errors
 import re
 import os
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
+load_dotenv()
 
-MONGO_URI = "mongodb+srv://hallominkenberg:x70c0y5QHod1DkX4@cluster0.3pvrh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+rapidapi_host = os.getenv('RAPIDAPI_HOST')
+rapidapi_key = os.getenv('RAPIDAPI_KEY')
+
+mongo_uri = os.getenv('MONGO_URI')
 DATABASE_NAME = 'football_db'
 COLLECTION_FIXTURES = 'fixtures'
 COLLECTION_USERS = 'users'
@@ -19,7 +24,7 @@ COLLECTION_FIXTUREBL = 'fixtureBL'
 
 
 # MongoDB-Client initialisieren
-client = MongoClient(MONGO_URI)
+client = MongoClient(mongo_uri)
 db = client[DATABASE_NAME]
 collection_fixtures = db[COLLECTION_FIXTURES]
 collection_users = db[COLLECTION_USERS]
@@ -125,8 +130,8 @@ def fetch_combine_store_data():
         bets = 'https://v3.football.api-sports.io/odds?league=78&season=2024&bookmaker=27&bet=1'
         #bets = 'https://v3.football.api-sports.io/odds?league=81&season=2024&bookmaker=22&bet=1'
         headers = {
-            'x-rapidapi-host': "v3.football.api-sports.io",
-            'x-rapidapi-key': "f874ba51abe2ca12438a94113027071b"
+            'x-rapidapi-host': rapidapi_host,
+            'x-rapidapi-key': rapidapi_key
         }
 
         response1 = requests.get(fixtures, headers=headers)
