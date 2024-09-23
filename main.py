@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 from pymongo import MongoClient, errors
 import re
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -283,4 +284,4 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
