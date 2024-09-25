@@ -32,6 +32,8 @@ collection_betlogs = db[COLLECTION_BETLOGS]
 collection_fixturesDFB = db[COLLECTION_FIXTUREDFB]
 collection_fixturesBL = db[COLLECTION_FIXTUREBL]
 
+
+@app.route('/', methods=['GET'])
 def get_mongo_client():
     try:
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
