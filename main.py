@@ -39,6 +39,7 @@ def get_mongo_client():
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
         # Testen der Verbindung durch Abrufen der Serverinformationen
         client.server_info()  # Dies löst eine Exception aus, wenn keine Verbindung besteht
+        print(client)
         return client
     except errors.ServerSelectionTimeoutError as err:
         print(f"MongoDB-Verbindung fehlgeschlagen: {err}")
