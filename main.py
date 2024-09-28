@@ -1,11 +1,10 @@
+from json import dumps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 import requests
-from pymongo import MongoClient, errors
 import re
 import os
-from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
@@ -34,7 +33,7 @@ collection_fixturesBL = db[COLLECTION_FIXTUREBL]
 
 def get_mongo_client():
     try:
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
         # Testen der Verbindung durch Abrufen der Serverinformationen
         client.server_info()  # Dies löst eine Exception aus, wenn keine Verbindung besteht
         print(client)
