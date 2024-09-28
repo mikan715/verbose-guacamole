@@ -5,6 +5,8 @@ from datetime import datetime
 import requests
 import re
 import os
+from pymongo import MongoClient, errors
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
