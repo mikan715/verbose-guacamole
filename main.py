@@ -117,7 +117,7 @@ def get_data_from_db():
         # Konvertieren der Dokumente in JSON
         data_json = dumps(data)
 
-        return data, 200
+        return jsonify(data), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
