@@ -1,4 +1,5 @@
-from json import dumps
+from bson import ObjectId
+from bson.json_util import dumps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
@@ -115,9 +116,9 @@ def get_data_from_db():
         ))
 
         # Konvertieren der Dokumente in JSON
-        data_json = dumps(data)
+        data_json = dumps(sorted_data)
 
-        return jsonify(data), 200
+        return data_json, 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
