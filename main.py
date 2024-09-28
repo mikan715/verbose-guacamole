@@ -115,7 +115,7 @@ def get_data_from_db():
         ))
 
         # Konvertieren der Dokumente in JSON
-        data_json = dumps(sorted_data)
+        data_json = dumps(data)
 
         return data_json, 200
 
