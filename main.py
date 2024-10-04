@@ -290,13 +290,25 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
     )
     print(f"User won the bet. New balance: {new_balance}")
 
+schedule.every().hour.do(fetch_combine_store_data)
+schedule.every().hour.do(check_bet)
+
+@app.before_first_request
+def activate_scheduler():
+    """Flask Hook, um den Scheduler beim ersten Request zu starten."""
+    print("Scheduler gestartet...")
+    
+    def run_scheduler():
+        """Scheduler-Schleife innerhalb der Flask-Anwendung."""
+        while True:
+            schedule.run_pending()
+            time.sleep(1)  # Zeitintervall zwischen Task-Prüfungen
+    
+    # In die Schleife gehen und den Scheduler ausführen
+    run_scheduler()
 
 
 
 if __name__ == '__main__':
-    schedule.run_pending()
-    time.sleep(1)
-    schedule.every().hour.do(fetch_combine_store_data)
-    schedule.every().hour.do(check_bet)
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
