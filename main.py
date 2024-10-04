@@ -6,6 +6,8 @@ from datetime import datetime
 import requests
 import re
 import os
+import schedule
+import time
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
 
@@ -124,7 +126,6 @@ def get_data_from_db():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route('/fetch-and-store-data', methods=['GET'])
 def fetch_combine_store_data():
     try:
         # URLs und Header konfigurieren
@@ -290,6 +291,12 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
     print(f"User won the bet. New balance: {new_balance}")
 
 
+schedule.every().hour.do(fetch_combine_store_data)
+schedule.every().hour.do(check_bet)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
