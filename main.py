@@ -291,14 +291,12 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
     print(f"User won the bet. New balance: {new_balance}")
 
 
-schedule.every().hour.do(fetch_combine_store_data)
-schedule.every().hour.do(check_bet)
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
-
-while True:
     schedule.run_pending()
     time.sleep(1)
-
+    schedule.every().hour.do(fetch_combine_store_data)
+    schedule.every().hour.do(check_bet)
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
