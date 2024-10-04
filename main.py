@@ -293,7 +293,7 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
 schedule.every().hour.do(fetch_combine_store_data)
 schedule.every().hour.do(check_bet)
 
-@app.before_first_request
+
 def activate_scheduler():
     """Flask Hook, um den Scheduler beim ersten Request zu starten."""
     print("Scheduler gestartet...")
@@ -307,8 +307,7 @@ def activate_scheduler():
     # In die Schleife gehen und den Scheduler ausführen
     run_scheduler()
 
-
-
 if __name__ == '__main__':
+    activate_scheduler()
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
