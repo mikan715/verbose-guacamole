@@ -4,5 +4,3 @@ pymongo
 flask-cors
 requests
 python-dotenv
-schedule
-time
