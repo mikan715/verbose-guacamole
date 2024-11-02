@@ -148,7 +148,7 @@ def add_bet():
         'wettgeld': wettgeld,
         'odd': odd,
         'value': value,
-        'checked_bet': False,
+        'checked_bet': "false",
     }
     print(new_bet)
 
