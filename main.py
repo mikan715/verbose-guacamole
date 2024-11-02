@@ -65,7 +65,7 @@ def search():
     print(user_data)
     
     if user_data:
-        shared_data_frontend["username"] = username
+        """ shared_data_frontend["username"] = username """
         user_data['_id'] = str(user_data['_id'])
         return jsonify(user_data), 200
     else:
