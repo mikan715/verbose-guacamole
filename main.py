@@ -51,7 +51,7 @@ def get_mongo_client():
         print(f"MongoDB-Verbindung fehlgeschlagen: {err}")
         return None
 
-@app.route('login', methods=['GET'])
+@app.route('/login', methods=['GET'])
 def search():
     # Suche nach einem Parameter in der URL
     username = request.args.get('username')
