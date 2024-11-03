@@ -256,7 +256,7 @@ def check_bet():
             "fixture.status.short": "FT"
         })
 
-        print('val', wettgeld, oddTeam, oddValue)
+        print('val', wettgeld, oddTeam, oddValue, checked_bet)
 
         if fixture:
             winner_home = fixture.get('teams', {}).get('home', {}).get('winner')
@@ -264,31 +264,40 @@ def check_bet():
 
             if winner_home == True and oddTeam == "Home" and checked_bet == False:
                 countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
+                # Aktualisiere nur das spezifische checked_bet für diese Wette
                 collection_users.update_one(
-                    {"name": shared_data_frontend.get("username")},
-                    {"$set": {"bets.$[elem].checked_bets": True}}
+                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                    {"$set": {"bets.$.checked_bet": True}}  # '$' bezieht sich auf das gefundene Element in der Liste
                 )
                 print('wette gewonnen home')
             elif winner_away == True and oddTeam == "Away" and checked_bet == False:
                 countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
                 collection_users.update_one(
-                    {"name": shared_data_frontend.get("username")},
-                    {"$set": {"bets.$[elem].checked_bets": True}}
+                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                    {"$set": {"bets.$.checked_bet": True}}
                 )
                 print('wette gewonnen away')
             elif winner_home != True and winner_away != True and oddTeam == "Draw" and checked_bet == False:
                 countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
                 collection_users.update_one(
-                    {"name": shared_data_frontend.get("username")},
-                    {"$set": {"bets.$[elem].checked_bets": True}}
+                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                    {"$set": {"bets.$.checked_bet": True}}
                 )
                 print('wette gewonnen draw')
             else:
+                # Setze checked_bet auf True, wenn die Wette nicht gewonnen wurde
+                collection_users.update_one(
+                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                    {"$set": {"bets.$.checked_bet": True}}
+                )
                 print('wette nicht gewonnen')
 
         else:
+            collection_users.update_one(
+                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                {"$set": {"bets.$.checked_bet": True}}
+            )
             print(f"No fixture found {fixture}")
-        
         
 def countOdd(wettgeld, oddValue, username, userBalance, bet):
     win_amount = float(wettgeld) * float(oddValue)
@@ -296,7 +305,7 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
     collection_users.update_one(
         {"name": username},
         {
-            "$set": {"balance": new_balance},
+            "$set": {"balance": new_balance}
         }
     )
     print(f"User won the bet. New balance: {new_balance}")
