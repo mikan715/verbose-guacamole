@@ -179,6 +179,7 @@ def fetch_all_pages(url, headers):
 
     return all_responses
 
+@app.route('/', methods=['GET'])
 def fetch_combine_store_data():
     print("fetch new data")
     try:
@@ -316,8 +317,9 @@ def meine_funktion():
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(fetch_combine_store_data, 'interval', hours=1)
+    scheduler.add_job(fetch_combine_store_data, 'interval', minutes=1)
     scheduler.add_job(check_bet, 'interval', minutes=1)
+    scheduler.add_job(meine_funktion, 'interval', minutes=1)
     scheduler.start()
     print("Scheduler gestartet.")
 
