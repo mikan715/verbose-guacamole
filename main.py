@@ -312,14 +312,10 @@ def countOdd(wettgeld, oddValue, username, userBalance, bet):
     print(f"User won the bet. New balance: {new_balance}")
 
 
-def meine_funktion():
-    print("Funktion wurde ausgeführt.")
-
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(fetch_combine_store_data, 'interval', minutes=1)
-    scheduler.add_job(check_bet, 'interval', minutes=1)
-    scheduler.add_job(meine_funktion, 'interval', minutes=1)
+    scheduler.add_job(fetch_combine_store_data, 'interval', minutes=60)
+    scheduler.add_job(check_bet, 'interval', minutes=2)
     scheduler.start()
     print("Scheduler gestartet.")
 
