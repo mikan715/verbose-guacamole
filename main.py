@@ -179,7 +179,6 @@ def fetch_all_pages(url, headers):
 
     return all_responses
 
-@app.route('/', methods=['GET'])
 def fetch_combine_store_data():
     print("fetch new data")
     try:
@@ -239,7 +238,7 @@ def fetch_combine_store_data():
         return jsonify({"error": str(e)}), 500
 
 def check_bet():
-    print("check bets")
+    print("--- check bets ---")
     user = collection_users.find_one({"name": shared_data_frontend.get("username")})
     userBalance = user.get('balance')
     if not user:
@@ -257,69 +256,57 @@ def check_bet():
             "fixture.status.short": "FT"
         })
 
-        print('val', wettgeld, oddTeam, oddValue, checked_bet)
+        print('--- start ---')
+        print('oddTeam', oddTeam)
+        print('checked_bet', checked_bet)
 
         if fixture:
             winner_home = fixture.get('teams', {}).get('home', {}).get('winner')
             winner_away = fixture.get('teams', {}).get('away', {}).get('winner')
 
+            print('winner home', winner_home)
+            print('winner away', winner_away)
+
             if winner_home == True and oddTeam == "Home" and checked_bet == False:
-                countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
-                # Aktualisiere nur das spezifische checked_bet für diese Wette
-                collection_users.update_one(
-                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                    {"$set": {"bets.$.checked_bet": True}}  # '$' bezieht sich auf das gefundene Element in der Liste
-                )
+                countOdd(wettgeld, oddValue, fixture_id, userBalance)
                 print('wette gewonnen home')
             elif winner_away == True and oddTeam == "Away" and checked_bet == False:
-                countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
-                collection_users.update_one(
-                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                    {"$set": {"bets.$.checked_bet": True}}
-                )
+                countOdd(wettgeld, oddValue, fixture_id, userBalance)
                 print('wette gewonnen away')
             elif winner_home != True and winner_away != True and oddTeam == "Draw" and checked_bet == False:
-                countOdd(wettgeld, oddValue, shared_data_frontend.get("username"), userBalance, bet)
-                collection_users.update_one(
-                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                    {"$set": {"bets.$.checked_bet": True}}
-                )
+                countOdd(wettgeld, oddValue, fixture_id, userBalance)
                 print('wette gewonnen draw')
             else:
-                # Setze checked_bet auf True, wenn die Wette nicht gewonnen wurde
-                collection_users.update_one(
-                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                    {"$set": {"bets.$.checked_bet": True}}
-                )
                 print('wette nicht gewonnen')
 
+            print('--- end ---')
         else:
-            collection_users.update_one(
-                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                {"$set": {"bets.$.checked_bet": True}}
-            )
             print(f"No fixture found {fixture}")
         
-def countOdd(wettgeld, oddValue, username, userBalance, bet):
+def countOdd(wettgeld, oddValue, fixture, userBalance):
     win_amount = float(wettgeld) * float(oddValue)
     new_balance = userBalance + win_amount
     collection_users.update_one(
-        {"name": username},
+        {"name": shared_data_frontend.get("username"), "bets.fixture": fixture},
         {
-            "$set": {"balance": new_balance}
+            "$set": {
+                "bets.$.checked_bet": True,
+                "balance": new_balance
+            }
         }
     )
     print(f"User won the bet. New balance: {new_balance}")
+    return new_balance
 
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(fetch_combine_store_data, 'interval', minutes=60)
-    scheduler.add_job(check_bet, 'interval', minutes=2)
+    #scheduler.add_job(fetch_combine_store_data, 'interval', minutes=60)
+    scheduler.add_job(check_bet, 'interval', minutes=1)
     scheduler.start()
     print("Scheduler gestartet.")
 
 if __name__ == '__main__':
     start_scheduler()
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
+    app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
