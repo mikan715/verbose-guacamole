@@ -301,20 +301,29 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 
 
 def start_scheduler():
+    print("Starting scheduler...")  # Debug log
     scheduler = BackgroundScheduler()
     
-    # Only add the check_bet job to the background scheduler
-    scheduler.add_job(
-        func=check_bet,
-        trigger="interval",
-        minutes=1,
-        id="check_bet_job",
-        name="Check bets every minute",
-        replace_existing=True
-    )
-    
-    scheduler.start()
-    atexit.register(lambda: scheduler.shutdown())
+    # Add job with error handling
+    try:
+        scheduler.add_job(
+            func=check_bet,
+            trigger="interval",
+            minutes=1,
+            id="check_bet_job",
+            name="Check bets every minute",
+            replace_existing=True
+        )
+        print("Job 'check_bet' added to scheduler")  # Debug log
+        
+        scheduler.start()
+        print("Scheduler started successfully")  # Debug log
+        
+        # Register shutdown
+        atexit.register(lambda: scheduler.shutdown())
+        
+    except Exception as e:
+        print(f"Error setting up scheduler: {str(e)}")  # Error log
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'fetch_data':
@@ -322,6 +331,8 @@ if __name__ == '__main__':
         fetch_combine_store_data()
     else:
         # This runs your normal web application with the background scheduler
+        print("Starting application...")  # Debug log
         start_scheduler()  # This will run check_bet every minute
+        print("Starting Flask app...")  # Debug log
         app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
