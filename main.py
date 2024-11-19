@@ -10,6 +10,7 @@ import re
 import os
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
+import atexit
 
 app = Flask(__name__)
 CORS(app)
@@ -301,10 +302,31 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    #scheduler.add_job(fetch_combine_store_data, 'interval', minutes=60)
-    scheduler.add_job(check_bet, 'interval', minutes=1)
+    
+    # Add your jobs
+    scheduler.add_job(
+        func=fetch_combine_store_data,
+        trigger="interval",
+        minutes=60,
+        id="fetch_data_job",
+        name="Fetch football data every hour",
+        replace_existing=True
+    )
+    
+    scheduler.add_job(
+        func=check_bet,
+        trigger="interval",
+        minutes=1,
+        id="check_bet_job",
+        name="Check bets every minute",
+        replace_existing=True
+    )
+    
+    # Start the scheduler
     scheduler.start()
-    print("Scheduler gestartet.")
+    
+    # Shut down the scheduler when exiting the app
+    atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     start_scheduler()
