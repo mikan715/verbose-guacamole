@@ -303,16 +303,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 def start_scheduler():
     scheduler = BackgroundScheduler()
     
-    # Add your jobs
-    scheduler.add_job(
-        func=fetch_combine_store_data,
-        trigger="interval",
-        minutes=60,
-        id="fetch_data_job",
-        name="Fetch football data every hour",
-        replace_existing=True
-    )
-    
+    # Only add the check_bet job to the background scheduler
     scheduler.add_job(
         func=check_bet,
         trigger="interval",
@@ -322,13 +313,15 @@ def start_scheduler():
         replace_existing=True
     )
     
-    # Start the scheduler
     scheduler.start()
-    
-    # Shut down the scheduler when exiting the app
     atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
-    start_scheduler()
-    app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
+    if len(sys.argv) > 1 and sys.argv[1] == 'fetch_data':
+        # This will be called by Heroku Scheduler
+        fetch_combine_store_data()
+    else:
+        # This runs your normal web application with the background scheduler
+        start_scheduler()  # This will run check_bet every minute
+        app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
 
