@@ -303,10 +303,9 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 
 
 def start_scheduler():
-    logging.info("Starting scheduler...")  # Debug log
-    scheduler = BackgroundScheduler()
+    logging.info("Starting scheduler...")
+    scheduler = BackgroundScheduler(daemon=True)
     
-    # Add job with error handling
     try:
         scheduler.add_job(
             func=check_bet,
@@ -314,27 +313,34 @@ def start_scheduler():
             minutes=1,
             id="check_bet_job",
             name="Check bets every minute",
-            replace_existing=True
+            replace_existing=True,
+            misfire_grace_time=None
         )
-        print("Job 'check_bet' added to scheduler")  # Debug log
+        logging.info("Job 'check_bet' added to scheduler")
         
         scheduler.start()
-        print("Scheduler started successfully")  # Debug log
+        logging.info("Scheduler started successfully")
         
-        # Register shutdown
+        jobs = scheduler.get_jobs()
+        logging.info(f"Active jobs: {[job.name for job in jobs]}")
+        
         atexit.register(lambda: scheduler.shutdown())
         
     except Exception as e:
-        print(f"Error setting up scheduler: {str(e)}")  # Error log
+        logging.error(f"Error setting up scheduler: {str(e)}")
+        raise
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'fetch_data':
-        # This will be called by Heroku Scheduler
+        logging.info("Running fetch_data job")
         fetch_combine_store_data()
     else:
-        # This runs your normal web application with the background scheduler
-        print("Starting application...")  # Debug log
-        start_scheduler()  # This will run check_bet every minute
-        print("Starting Flask app...")  # Debug log
-        app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
+        logging.info("Starting application...")
+        try:
+            start_scheduler()
+            logging.info("Starting Flask app...")
+            app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
+        except Exception as e:
+            logging.error(f"Application error: {str(e)}")
+            raise
 
