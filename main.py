@@ -8,6 +8,8 @@ import time
 import requests
 import re
 import os
+import sys
+import logging
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
 import atexit
@@ -301,7 +303,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 
 
 def start_scheduler():
-    print("Starting scheduler...")  # Debug log
+    logging.info("Starting scheduler...")  # Debug log
     scheduler = BackgroundScheduler()
     
     # Add job with error handling
