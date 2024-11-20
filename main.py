@@ -309,7 +309,7 @@ def start_scheduler():
     scheduler.add_job(
         func=check_bet,
         trigger="interval",
-        minutes=1,
+        minutes=5,
         id="check_bet_job",
         name="Check bets every minute",
         replace_existing=True,
