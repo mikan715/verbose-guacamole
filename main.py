@@ -303,44 +303,33 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
 
 
 def start_scheduler():
-    logging.info("Starting scheduler...")
+    print("Starting scheduler...")
     scheduler = BackgroundScheduler(daemon=True)
     
-    try:
-        scheduler.add_job(
-            func=check_bet,
-            trigger="interval",
-            minutes=1,
-            id="check_bet_job",
-            name="Check bets every minute",
-            replace_existing=True,
-            misfire_grace_time=None
-        )
-        logging.info("Job 'check_bet' added to scheduler")
-        
-        scheduler.start()
-        logging.info("Scheduler started successfully")
-        
-        jobs = scheduler.get_jobs()
-        logging.info(f"Active jobs: {[job.name for job in jobs]}")
-        
-        atexit.register(lambda: scheduler.shutdown())
-        
-    except Exception as e:
-        logging.error(f"Error setting up scheduler: {str(e)}")
-        raise
+    scheduler.add_job(
+        func=check_bet,
+        trigger="interval",
+        minutes=1,
+        id="check_bet_job",
+        name="Check bets every minute",
+        replace_existing=True,
+        misfire_grace_time=None
+    )
+    
+    scheduler.start()
+    
+    jobs = scheduler.get_jobs()
+    
+    atexit.register(lambda: scheduler.shutdown())
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'fetch_data':
-        logging.info("Running fetch_data job")
+        print("hell yes, i'm Running fetch_data job")
         fetch_combine_store_data()
     else:
-        logging.info("Starting application...")
         try:
             start_scheduler()
-            logging.info("Starting Flask app...")
             app.run(debug=False, host='0.0.0.0', port=int(os.getenv("PORT", 8000)))
         except Exception as e:
-            logging.error(f"Application error: {str(e)}")
             raise
 
