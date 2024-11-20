@@ -8,7 +8,6 @@ import time
 import requests
 import re
 import os
-import sys
 import logging
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
