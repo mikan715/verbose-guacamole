@@ -242,6 +242,7 @@ def fetch_combine_store_data():
 
 def check_bet():
     print("--- check bets ---")
+    current_time = datetime.utcnow()  # Get current UTC time
     user = collection_users.find_one({"name": shared_data_frontend.get("username")})
     userBalance = user.get('balance')
     if not user:
@@ -271,22 +272,27 @@ def check_bet():
             print('winner away', winner_away)
 
             if winner_home == True and oddTeam == "Home" and checked_bet == False:
-                countOdd(wettgeld, oddValue, fixture_id, userBalance)
+                countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen home')
             elif winner_away == True and oddTeam == "Away" and checked_bet == False:
-                countOdd(wettgeld, oddValue, fixture_id, userBalance)
+                countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen away')
             elif winner_home != True and winner_away != True and oddTeam == "Draw" and checked_bet == False:
-                countOdd(wettgeld, oddValue, fixture_id, userBalance)
+                countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen draw')
             else:
+                # Update last_checked even for losing bets
+                collection_users.update_one(
+                    {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                    {"$set": {"bets.$.last_checked": current_time}}
+                )
                 print('wette nicht gewonnen')
 
             print('--- end ---')
         else:
             print(f"No fixture found {fixture}")
         
-def countOdd(wettgeld, oddValue, fixture, userBalance):
+def countOdd(wettgeld, oddValue, fixture, userBalance, check_time):
     win_amount = float(wettgeld) * float(oddValue)
     new_balance = userBalance + win_amount
     collection_users.update_one(
@@ -294,6 +300,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance):
         {
             "$set": {
                 "bets.$.checked_bet": True,
+                "bets.$.last_checked": check_time,
                 "balance": new_balance
             }
         }
