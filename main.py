@@ -271,6 +271,12 @@ def check_bet():
             print('winner home', winner_home)
             print('winner away', winner_away)
 
+            # Update last_checked timestamp for every check
+            collection_users.update_one(
+                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                {"$set": {"bets.$.last_checked": current_time}}
+            )
+
             if winner_home == True and oddTeam == "Home" and checked_bet == False:
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen home')
@@ -281,13 +287,12 @@ def check_bet():
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen draw')
             else:
-                # Update last_checked even for losing bets
+                # Only update checked_bet and result_time for completed bets
                 collection_users.update_one(
                     {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
                     {"$set": {
                         "bets.$.checked_bet": True,
-                        "bets.$.last_checked": current_time,
-                        "bets.$.won_at": current_time,
+                        "bets.$.result_time": current_time,
                     }}
                 )
                 print('wette nicht gewonnen')
@@ -304,8 +309,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance, check_time):
         {
             "$set": {
                 "bets.$.checked_bet": True,
-                "bets.$.last_checked": check_time,
-                "bets.$.won_at": check_time,
+                "bets.$.result_time": check_time,  # When the bet was determined won/lost
                 "balance": new_balance
             }
         }
