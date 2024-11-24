@@ -284,7 +284,11 @@ def check_bet():
                 # Update last_checked even for losing bets
                 collection_users.update_one(
                     {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                    {"$set": {"bets.$.last_checked": current_time}}
+                    {"$set": {
+                        "bets.$.checked_bet": True,
+                        "bets.$.last_checked": current_time,
+                        "bets.$.won_at": current_time,
+                    }}
                 )
                 print('wette nicht gewonnen')
 
@@ -301,6 +305,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance, check_time):
             "$set": {
                 "bets.$.checked_bet": True,
                 "bets.$.last_checked": check_time,
+                "bets.$.won_at": check_time,
                 "balance": new_balance
             }
         }
