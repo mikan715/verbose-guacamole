@@ -264,7 +264,15 @@ def check_bet():
         print('oddTeam', oddTeam)
         print('checked_bet', checked_bet)
 
-        if fixture:
+        if checked_bet == True:
+            print('bet already checked')
+            collection_users.update_one(
+                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                {"$set": {
+                    "bets.$.last_check": current_time,
+                }}
+            )
+        elif fixture:
             winner_home = fixture.get('teams', {}).get('home', {}).get('winner')
             winner_away = fixture.get('teams', {}).get('away', {}).get('winner')
 
@@ -277,13 +285,13 @@ def check_bet():
                 {"$set": {"bets.$.last_checked": current_time}}
             )
 
-            if winner_home == True and oddTeam == "Home" and checked_bet == False:
+            if winner_home == True and oddTeam == "Home":
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen home')
-            elif winner_away == True and oddTeam == "Away" and checked_bet == False:
+            elif winner_away == True and oddTeam == "Away":
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen away')
-            elif winner_home != True and winner_away != True and oddTeam == "Draw" and checked_bet == False:
+            elif winner_home != True and winner_away != True and oddTeam == "Draw" :
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen draw')
             else:
@@ -293,12 +301,19 @@ def check_bet():
                     {"$set": {
                         "bets.$.checked_bet": True,
                         "bets.$.result_time": current_time,
+                        "bets.$.last_check": current_time,
                     }}
                 )
                 print('wette nicht gewonnen')
 
             print('--- end ---')
         else:
+            collection_users.update_one(
+                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
+                {"$set": {
+                    "bets.$.last_check": current_time,
+                }}
+            )
             print(f"No fixture found {fixture}")
         
 def countOdd(wettgeld, oddValue, fixture, userBalance, check_time):
@@ -310,6 +325,7 @@ def countOdd(wettgeld, oddValue, fixture, userBalance, check_time):
             "$set": {
                 "bets.$.checked_bet": True,
                 "bets.$.result_time": check_time,  # When the bet was determined won/lost
+                "bets.$.last_check": check_time,
                 "balance": new_balance
             }
         }
