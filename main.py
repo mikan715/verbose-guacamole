@@ -183,7 +183,8 @@ def fetch_all_pages(url, headers):
     return all_responses
 
 def fetch_combine_store_data():
-    print("fetch new data")
+    current_time = datetime.utcnow() 
+    print("fetch new data", current_time)
     try:
         # URLs und Header konfigurieren
         fixtures = 'https://v3.football.api-sports.io/fixtures?league=78&season=2024'
@@ -279,12 +280,6 @@ def check_bet():
             print('winner home', winner_home)
             print('winner away', winner_away)
 
-            # Update last_checked timestamp for every check
-            collection_users.update_one(
-                {"name": shared_data_frontend.get("username"), "bets.fixture": fixture_id},
-                {"$set": {"bets.$.last_checked": current_time}}
-            )
-
             if winner_home == True and oddTeam == "Home":
                 countOdd(wettgeld, oddValue, fixture_id, userBalance, current_time)
                 print('wette gewonnen home')
@@ -338,12 +333,24 @@ def start_scheduler():
     print("Starting scheduler...")
     scheduler = BackgroundScheduler(daemon=True)
     
+    # Existing job for checking bets
     scheduler.add_job(
         func=check_bet,
         trigger="interval",
-        minutes=5,
+        minutes=3,
         id="check_bet_job",
         name="Check bets every minute",
+        replace_existing=True,
+        misfire_grace_time=None
+    )
+    
+    # New job for fetching data
+    scheduler.add_job(
+        func=fetch_combine_store_data,
+        trigger="interval",
+        minutes=15,
+        id="fetch_data_job",
+        name="Fetch data every 15 minutes",
         replace_existing=True,
         misfire_grace_time=None
     )
