@@ -2,7 +2,7 @@ from bson import ObjectId
 from bson.json_util import dumps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 import time
 import requests
@@ -183,60 +183,52 @@ def fetch_all_pages(url, headers):
     return all_responses
 
 def fetch_combine_store_data():
-    current_time = datetime.utcnow() 
+    current_time = datetime.utcnow()
     print("fetch new data", current_time)
+    
+    # First, check if we need to update the data
+    latest_record = collection_fixturesBL.find_one(
+        {},
+        sort=[('fixture.update', -1)]
+    )
+    
+    # Only update if no data exists or data is older than 1 hour
+    if latest_record:
+        last_update = latest_record['fixture'].get('update')
+        if last_update and (current_time - datetime.fromisoformat(last_update)) < timedelta(hours=0.1):
+            return jsonify({"message": "Using existing data (less than 1 hour old)"}), 200
+
     try:
-        # URLs und Header konfigurieren
-        fixtures = 'https://v3.football.api-sports.io/fixtures?league=78&season=2024'
-        #fixtures = 'https://v3.football.api-sports.io/fixtures?league=81&season=2024'
-        bets = 'https://v3.football.api-sports.io/odds?league=78&season=2024&bookmaker=27&bet=1'
-        #bets = 'https://v3.football.api-sports.io/odds?league=81&season=2024&bookmaker=22&bet=1'
         headers = {
             'x-rapidapi-host': rapidapi_host,
             'x-rapidapi-key': rapidapi_key
         }
 
-        response1 = requests.get(fixtures, headers=headers)
-        response1.raise_for_status()
-        all_fixtures = response1.json()['response']
-        #print('all fixtures', all_fixtures)
+        # Make a single call for fixtures with odds included
+        fixtures_url = 'https://v3.football.api-sports.io/fixtures?league=78&season=2024&odds=27'
+        all_data = fetch_all_pages(fixtures_url, headers)
 
-        all_odds = fetch_all_pages(bets, headers)
-        #print('all odds', all_odds)
+        if not all_data:
+            return jsonify({"message": "No data received from API"}), 200
 
-        combined_data = []
-        for fixture in all_fixtures:
-            fixture_id = fixture['fixture']['id']
-            print('fixture id', fixture_id)
+        # Process and clean the data
+        combined_data = [{
+            "league": item.get("league", {}),
+            "fixture": item.get("fixture", {}),
+            "teams": item.get("teams", {}),
+            "goals": item.get("goals", {}),
+            "score": item.get("score", {}),
+            "update": item.get("update", ""),
+            "bookmakers": item.get("odds", [])
+        } for item in all_data]
 
-            # Suchen der passenden Odds für das Fixture
-            matching_odds = next((item for item in all_odds if item['fixture']['id'] == fixture_id), None)
-            print('matiching odds', matching_odds)
-
-            cleaned_fixture = {
-                "league": fixture.get("league", {}),
-                "fixture": fixture.get("fixture", {}),
-                "teams": fixture.get("teams", {}),
-                "goals": fixture.get("goals", {}),
-                "score": fixture.get("score", {}),
-                "update": fixture.get("update", ""),
-                "bookmakers": matching_odds['bookmakers'] if matching_odds else []
-            }
-            #print(cleaned_fixture)
-            combined_data.append(cleaned_fixture)
-
-        # Vor dem Speichern alle Einträge in der Collection löschen
+        # Update MongoDB
         collection_fixturesBL.delete_many({})
-
-        # Neue Daten in MongoDB speichern
         if combined_data:
             collection_fixturesBL.insert_many(combined_data)
-            return jsonify({"message": "Daten erfolgreich abgerufen, alte Einträge gelöscht und neue gespeichert!"}), 200
-        else:
-            return jsonify({"message": "Keine Daten zum Speichern."}), 200
-
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+            return jsonify({"message": "Data successfully updated!"}), 200
+        
+        return jsonify({"message": "No data to store."}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
